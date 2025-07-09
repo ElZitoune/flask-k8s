@@ -1,0 +1,32 @@
+pipeline {
+  agent any
+  environment {
+    IMAGE_NAME = "flask-app"
+    DOCKER_REGISTRY = "localhost:5000"
+  }
+  stages {
+    stage('Checkout') {
+      steps {
+        git branch: 'main', url: 'https://github.com/ElZitoune/flask-k8s.git'
+      }
+    }
+    stage('Build Docker') {
+      steps {
+        sh 'eval $(minikube docker-env) && docker build -t $IMAGE_NAME:local .'
+      }
+    }
+    stage('Deploy to Minikube') {
+      steps {
+        sh 'eval $(minikube docker-env) && minikube kubectl -- apply -f deployment.yaml'
+      }
+    }
+  }
+  post {
+    success {
+      echo 'Pipeline terminé avec succès.'
+    }
+    failure {
+      echo 'Une erreur est survenue.'
+    }
+  }
+}
